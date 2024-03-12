@@ -38,25 +38,30 @@ def encode_columns(dataframe, column_names):
     return [encoded_df] + reference_dfs
 
 def get_reddit_comments(r_script_path):
-    from rpy2.robjects import r
     # This function will run the R script developed to retrieve the reddit comments
-    try:
-        with open(r_script_path, 'r') as r_file:
-            r_script_content = r_file.read()
-
-        # Run the R script
-        r(r_script_content)
-
-        df = pd.read_csv(
-            'reddit scrape.txt',
-            sep = '\t'
-        )
-
-        return df
+    from rpy2.robjects import r
     
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+    reddit_comments_path = 'reddit scrape.txt'
+    if os.path.exists(reddit_comments_path):
+        pass
+    else:
+        try:
+            with open(r_script_path, 'r') as r_file:
+                r_script_content = r_file.read()
+
+            # Run the R script
+            r(r_script_content)
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            
+            return None
+    
+    return pd.read_csv(
+        reddit_comments_path,
+        sep = '\t',
+        encoding='windows-1252'
+    )
 
 def get_linkedin_skills():
     df = pd.DataFrame()
@@ -116,4 +121,5 @@ def main():
     
 
 if __name__ == '__main__':
-    main()
+    print(get_reddit_comments('Reddit_scrape.R'))
+    #main()
