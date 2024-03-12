@@ -171,7 +171,8 @@ print(ranking_list)
 file_name = "skills.csv"
 
 df = pd.DataFrame(ranking_list, columns=['Skills', 'Relevancy'])
-df.to_csv(file_name, encoding='utf-8', index=False)
+
+df.to_csv(file_name, encoding='utf-8', index=False, sep = '\t')
 
 
 
