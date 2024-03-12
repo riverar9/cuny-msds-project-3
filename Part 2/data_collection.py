@@ -1,24 +1,7 @@
-# %%
 import pandas as pd
 import sqlite3
 
 def write_to_sqlite(dataframe, file_path, table_name='data_table', index=False, if_exists='replace'):
-    """
-    Write a DataFrame to an SQLite database.
-
-    Parameters:
-    - dataframe: pandas DataFrame
-    - file_path: str, path to the SQLite file
-    - table_name: str, name of the table to be created in the SQLite database
-    - index: bool, whether to write DataFrame index as a column
-    - if_exists: str, {'fail', 'replace', 'append'}, default: 'replace'
-        - 'fail': If the table exists, do nothing.
-        - 'replace': If the table exists, drop it, recreate it, and insert data.
-        - 'append': If the table exists, insert data. Create if does not exist.
-
-    Returns:
-    - None
-    """
     # Connect to the SQLite database
     conn = sqlite3.connect(file_path)
 
@@ -52,13 +35,17 @@ def encode_columns(dataframe, column_names):
 
     # Return the list of DataFrames [encoded_df, reference_df1, reference_df2, ...]
     return [encoded_df] + reference_dfs
-# %%
+
+def get_reddit_comments(r_script_path):
+    
+    return None
+
 def main():
-    # %%
+    
     # Import our packages we need
     import os
     import pandas as pd
-    # %%
+    
     # Read in our files
     linkedin_skills = pd.read_csv(
         'https://raw.githubusercontent.com/riverar9/cuny-msds/main/data607/projects/project-3/Part%201/linkedin_skills_example.csv'
@@ -66,7 +53,7 @@ def main():
 
     linkedin_skills.head()
 
-    # %%
+    
     reddit_comments = pd.read_csv(
         'https://raw.githubusercontent.com/riverar9/cuny-msds/main/data607/projects/project-3/Part%201/reddit_ds_scrape_sample.txt'
         , sep = '\t'
@@ -84,7 +71,7 @@ def main():
         ]
     )
 
-    # %%
+    
     write_to_sqlite(
         comments
         , "reddit.sqllite"
@@ -109,6 +96,6 @@ def main():
         , if_exists='replace'
     )
     
-# %%
+
 if __name__ == "__main__":
     main()
