@@ -1,5 +1,6 @@
 import pandas as pd
 import sqlite3
+import os
 
 def write_to_sqlite(dataframe, file_path, table_name='data_table', index=False, if_exists='replace'):
     # Connect to the SQLite database
@@ -37,33 +38,26 @@ def encode_columns(dataframe, column_names):
     return [encoded_df] + reference_dfs
 
 def get_reddit_comments(r_script_path):
-    
-    return None
+    df = pd.DataFrame()
 
-def main():
-    
-    # Import our packages we need
-    import os
-    import pandas as pd
-    
-    # Read in our files
-    linkedin_skills = pd.read_csv(
-        'https://raw.githubusercontent.com/riverar9/cuny-msds/main/data607/projects/project-3/Part%201/linkedin_skills_example.csv'
-    )
+    return df
 
+def get_linkedin_skills():
+    df = pd.DataFrame()
+    return df
+
+def main():    
+    # Get our linkedin data
+    linkedin_skills = get_linkedin_skills()
     linkedin_skills.head()
 
-    
-    reddit_comments = pd.read_csv(
-        'https://raw.githubusercontent.com/riverar9/cuny-msds/main/data607/projects/project-3/Part%201/reddit_ds_scrape_sample.txt'
-        , sep = '\t'
-    )
-
+    # Get our reddit comments data
+    reddit_comments = get_reddit_comments()
     reddit_comments = reddit_comments[reddit_comments['date'].notna()]
-
     reddit_comments.head()
 
-    comments, authors, posts = encode_columns(
+    # Encode the reddit data
+    r_comments, r_authors, r_posts = encode_columns(
         reddit_comments,
         [
             'author',
@@ -71,31 +65,39 @@ def main():
         ]
     )
 
+    # Write the comments data to a sqlite file
+    write_to_sqlite(
+        r_comments
+        , "reddit.sqllite"
+        , table_name='reddit_comments'
+        , index = False
+        , if_exists = 'replace'
+    )
+
+    write_to_sqlite(
+        r_authors
+        , "reddit.sqllite"
+        , table_name='reddit_authors'
+        , index = False
+        , if_exists = 'replace'
+    )
+
+    write_to_sqlite(
+        r_posts
+        , "reddit.sqllite"
+        , table_name='reddit_posts'
+        , index = False
+        , if_exists = 'replace'
+    )
+
+    write_to_sqlite(
+        linkedin_skills
+        , 'reddit.sqllite'
+        , table_name = 'linkedin_skills'
+        , index = False
+        , if_exists = 'replace'
+    )
     
-    write_to_sqlite(
-        comments
-        , "reddit.sqllite"
-        , table_name='comments'
-        , index=False
-        , if_exists='replace'
-    )
 
-    write_to_sqlite(
-        authors
-        , "reddit.sqllite"
-        , table_name='authors'
-        , index=False
-        , if_exists='replace'
-    )
-
-    write_to_sqlite(
-        posts
-        , "reddit.sqllite"
-        , table_name='posts'
-        , index=False
-        , if_exists='replace'
-    )
-    
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
