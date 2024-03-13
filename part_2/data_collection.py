@@ -1,3 +1,4 @@
+# %%
 import pandas as pd
 import sqlite3
 import os
@@ -29,7 +30,7 @@ def encode_columns(dataframe, column_names):
             'Encoded_' + col: encoded_column
         })
 
-        reference_dfs.append(reference_df)
+        reference_dfs.append(reference_df.drop_duplicates())
 
     # Remove the original columns from the encoded DataFrame
     encoded_df = encoded_df.drop(columns=column_names)
@@ -37,11 +38,11 @@ def encode_columns(dataframe, column_names):
     # Return the list of DataFrames [encoded_df, reference_df1, reference_df2, ...]
     return [encoded_df] + reference_dfs
 
-def get_reddit_comments(r_script_path):
+def get_reddit_comments(r_script_path = 'Reddit_scrape.R'):
     # This function will run the R script developed to retrieve the reddit comments
     from rpy2.robjects import r
     
-    reddit_comments_path = 'reddit scrape.txt'
+    reddit_comments_path = 'reddit_scrape.txt'
     if os.path.exists(reddit_comments_path):
         pass
     else:
@@ -57,14 +58,48 @@ def get_reddit_comments(r_script_path):
             
             return None
     
-    return pd.read_csv(
+
+    df = []
+
+    for chunk in pd.read_csv(
         reddit_comments_path,
-        sep = '\t',
-        encoding='windows-1252'
+        chunksize = 10_000,
+        encoding = 'windows-1252',
+        sep = "\t",
+        on_bad_lines = 'skip'
+    ):
+        df.append(chunk)
+    
+    df = pd.concat(df)
+
+    return df
+
+def get_linkedin_skills(python_script_path = 'SkillsScrape.py'):
+    import subprocess
+
+    linkedin_skills_path = 'linkedin_skills.csv'
+    
+    if os.path.exists(linkedin_skills_path):
+        pass
+    else:
+        try:
+            subprocess.run(
+                [
+                    'python'
+                    , python_script_path
+                ]
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+
+            return None
+
+    df = pd.read_csv(
+        linkedin_skills_path,
+        encoding='utf-8',
+        sep='\t'
     )
 
-def get_linkedin_skills():
-    df = pd.DataFrame()
     return df
 
 def main():    
@@ -89,7 +124,7 @@ def main():
     # Write the comments data to a sqlite file
     write_to_sqlite(
         r_comments
-        , "reddit.sqllite"
+        , "reddit.db"
         , table_name='reddit_comments'
         , index = False
         , if_exists = 'replace'
@@ -97,7 +132,7 @@ def main():
 
     write_to_sqlite(
         r_authors
-        , "reddit.sqllite"
+        , "reddit.db"
         , table_name='reddit_authors'
         , index = False
         , if_exists = 'replace'
@@ -105,7 +140,7 @@ def main():
 
     write_to_sqlite(
         r_posts
-        , "reddit.sqllite"
+        , "reddit.db"
         , table_name='reddit_posts'
         , index = False
         , if_exists = 'replace'
@@ -113,13 +148,13 @@ def main():
 
     write_to_sqlite(
         linkedin_skills
-        , 'reddit.sqllite'
+        , 'reddit.db'
         , table_name = 'linkedin_skills'
         , index = False
         , if_exists = 'replace'
     )
     
-
+# %%
 if __name__ == '__main__':
-    print(get_reddit_comments('Reddit_scrape.R'))
-    #main()
+    main()
+# %%

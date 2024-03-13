@@ -54,6 +54,8 @@ cat("\tTime Passed (minutes):", time_passed_minutes, "\n")
 
 print("Scraping r/dataengineering threads...")
 
+start <- Sys.time()
+
 de_comments <- get_thread_content(de_urls)
 de_comments <- as.data.frame(de_comments$comments)
 
@@ -67,5 +69,11 @@ time_passed_minutes <- as.numeric(
 cat("\tTime Passed (minutes):", time_passed_minutes, "\n")
 
 reddit_scrape <- rbind(ds_comments, de_comments)
-write.csv(reddit_scrape, "reddit scrape.csv")
-write.table(reddit_scrape, "reddit scrape.txt", sep = "\t", row.names = FALSE)
+# write.csv(reddit_scrape, "reddit scrape.csv")
+write.table(
+  reddit_scrape
+  , "reddit_scrape.txt"
+  , sep = "\t"
+  , row.names = FALSE
+  ,  fileEncoding = "windows-1252"
+)
