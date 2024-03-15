@@ -33,7 +33,7 @@ bing <- get_sentiments("bing")
 
 **nrc from Saif Mohammad and Peter Turney**
 ```{r}
-get_sentiments("nrc")
+nrc <- get_sentiments("nrc")
 ```
 
 ### SCRAPING THANKS TO LUCAS
@@ -48,11 +48,6 @@ test_scrape <- read.csv("https://raw.githubusercontent.com/GuillermoCharlesSchne
 full_scrape <- read.csv("https://raw.githubusercontent.com/riverar9/cuny-msds-project-3/main/part_2/reddit%20scrape.csv")
 ```
 
-**separate 125k comments into single words**
-```{r}
-tidy_full_scrape <- full_scrape %>%
-  unnest_tokens(word, comment)
-```
 
 #UPDATED SKILLS
 
@@ -135,6 +130,27 @@ test_scrape$comment <- gsub("process data", "processdata",test_scrape$comment)
 
 ```
 
+**separate 8000 comments into single words**
+```{r}
+tidy_test_scrape <- test_scrape %>%
+  unnest_tokens(word, comment)
+```
+
+
+```{r}
+TEST <- tidy_test_scrape %>%
+  left_join(afinn) 
+
+
+TEST <- TEST %>%
+  left_join(bing) 
+
+```
+
+
+```{r}
+write.csv(tidy_test_scrape, "tidy_test_scrape_merged.csv", row.names=FALSE)
+```
 
 ###**FULL SCRAPE**
 
@@ -181,15 +197,7 @@ full_scrape$comment <- gsub("process data", "processdata",full_scrape$comment)
 ```
 
 
-**separate 8000 comments into single words**
-```{r}
-tidy_test_scrape <- test_scrape %>%
-  unnest_tokens(word, comment)
-```
 
-```{r}
-write.csv(tidy_test_scrape, "tidy_test_scrape_merged.csv", row.names=FALSE)
-```
 
 
 **separate 125k comments into single words**
@@ -198,9 +206,24 @@ tidy_full_scrape <- full_scrape %>%
   unnest_tokens(word, comment)
 ```
 
+
+```{r}
+sentiment_tidy_merged_full_scrape <- tidy_full_scrape %>%
+  left_join(afinn) 
+
+
+sentiment_tidy_merged_full_scrape <- sentiment_tidy_merged_full_scrape %>%
+  left_join(bing) 
+
+```
+
+
+
+
+
 CLEANED TIDIED DATASET WITH MERGED WORDS
 ```{r}
-write.csv(tidy_full_scrape, "tidy_full_scrape_merged.csv", row.names=FALSE)
+write.csv(sentiment_tidy_merged_full_scrape, "tidy_full_scrape_merged_sentiments.csv", row.names=FALSE)
 ```
 
 
