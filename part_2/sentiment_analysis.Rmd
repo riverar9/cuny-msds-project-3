@@ -22,12 +22,14 @@ sentiment analysis over time
 #install.packages("tidyverse")
 #install.packages("wordcloud")
 #install.packages("datawizard")
+#install.packages("ggrepel")
 library(tidytext)
 library(textdata)
 library(tidyverse)
 library(wordcloud)
 library(caret)
 library(datawizard)
+library(ggrepel)
 ```
 
 ## https://www.tidytextmining.com/sentiment
@@ -210,8 +212,8 @@ full_scrape$comment <- tolower(full_scrape$comment)
 
 **CLEANING TWO WORDS TO ONE. once again no function... zzz**
 ```{r}
-full_scrape$comment <- gsub("data science", "datascience,",full_scrape$comment)
-full_scrape$comment <- gsub("data analysis", "dataanalysis,",full_scrape$comment)
+full_scrape$comment <- gsub("data science", "datascience",full_scrape$comment)
+full_scrape$comment <- gsub("data analysis", "dataanalysis",full_scrape$comment)
 full_scrape$comment <- gsub("cloud databases", "clouddatabases",full_scrape$comment)
 full_scrape$comment <- gsub("machine learning", "machinelearning",full_scrape$comment)
 full_scrape$comment <- gsub("apache spark", "apachespark",full_scrape$comment)
@@ -219,13 +221,13 @@ full_scrape$comment <- gsub("pivot table", "pivottable",full_scrape$comment)
 full_scrape$comment <- gsub("case studies", "casestudies",full_scrape$comment)
 full_scrape$comment <- gsub("convolutional neuralnet works", "convolutionalneuralnetworks",full_scrape$comment)
 full_scrape$comment <- gsub("data ethics", "dataethics",full_scrape$comment)
-full_scrape$comment <- gsub("data collection", "datacollection,",full_scrape$comment)
-full_scrape$comment <- gsub("data exploration", "dataexploration,",full_scrape$comment)
-full_scrape$comment <- gsub("artificial intelligence", "artificialintelligence,",full_scrape$comment)
-full_scrape$comment <- gsub("machine learning", "machinelearning,",full_scrape$comment)
+full_scrape$comment <- gsub("data collection", "datacollection",full_scrape$comment)
+full_scrape$comment <- gsub("data exploration", "dataexploration",full_scrape$comment)
+full_scrape$comment <- gsub("artificial intelligence", "artificialintelligence",full_scrape$comment)
+full_scrape$comment <- gsub("machine learning", "machinelearning",full_scrape$comment)
 
 #ive started to regret it about here
-full_scrape$comment <- gsub("ask questions", "askquestions,",full_scrape$comment)
+full_scrape$comment <- gsub("ask questions", "askquestions",full_scrape$comment)
 full_scrape$comment <- gsub("data driven", "datadriven",full_scrape$comment)
 full_scrape$comment <- gsub("big data", "bigdata",full_scrape$comment)
 full_scrape$comment <- gsub("descriptive statistics", "descriptivestatistics",full_scrape$comment)
@@ -263,6 +265,9 @@ comment_ids_full <- distinct(comments_containing_skills_full_scrape, X, Skills)
 #then filtered the full scrape to just include comment ids that were in that list
 comments_containing_skills_full_scrape <- filter(tidy_full_scrape, tidy_full_scrape$X %in% comment_ids_full$X)
 
+write.csv(comments_containing_skills_full_scrape , "comments_containing_skills_full_scrape .csv", row.names=FALSE)
+
+
 #added afinn value
 comments_containing_skills_full_scrape <- comments_containing_skills_full_scrape %>%
   left_join(afinn) %>%
@@ -276,9 +281,10 @@ sentiment_mean_full_scrape <- comments_containing_skills_full_scrape %>%
   group_by(X) %>%
   summarize(sentiment_score = mean(value))
 
-#adding skill groupings to the comments 
-comment_ids_full %>% 
-  left_join(sentiment_mean_full_scrape)
+#adding skill groupings to the comments, to graph it
+relevancy_vs_sentiment <- comment_ids_full %>% 
+  left_join(sentiment_mean_full_scrape) %>%
+  left_join(Skills)
 
 #mean of each skill group
 MEAN <- comment_ids_full %>% 
@@ -301,6 +307,64 @@ MEAN$RescaledRelevancy <- rescale(MEAN$Relevancy, to = c(0, 1))
 
 
 ```
+
+```{r}
+#adding skill groupings to the comments, to graph it
+relevancy_vs_sentiment <- comment_ids_full %>% 
+  left_join(sentiment_mean_full_scrape) %>%
+  left_join(Skills)
+
+```
+
+# **GRAPHS**
+```{r}
+top10skillsGraph <- relevancy_vs_sentiment %>%
+  filter(Skills == c("Prepare Data for Exploration","Information Technology (IT) Architecture")) 
+
+
+skill_comment_count <- comment_ids_full %>%
+  group_by(Skills) %>%
+ count(Skills)
+  
+MEAN <- MEAN %>%
+  left_join(skill_comment_count)
+
+top10MEAN <- MEAN %>%
+arrange(n) %>% 
+   top_n(10)
+
+top10MEAN$Skills<- str_trim(top10MEAN$Skills) 
+
+ggplot(top10MEAN, aes(x=rescaled_score, y=RescaledRelevancy, size = n)) +
+   geom_vline(xintercept = 0.5) + geom_hline(yintercept = 0.5) +
+    geom_point(alpha=0.6) +
+    geom_label_repel(
+    label=top10MEAN$Skills,
+    size=3,
+    nudge_x = 0, nudge_y = 0.01)+
+    lims(x=c(0,1),y=c(0,1))+
+    scale_size(range = c(1.8,6.6 ), name="Count of Comments") +
+    labs(x='Comparative Relevancy', y='Comparative Sentiment', title='Relevancy vs Sentiment in Most Commented Skills') 
+
+
+ggplot(relevancy_vs_sentiment, aes(reorder(factor(x=Skills),Relevancy), y=sentiment_score)) +
+  geom_smooth(alpha = 1/10, method = "lm", se=TRUE, color="blue", aes(group=1)) +
+  geom_boxplot(varwidth = TRUE) +
+  labs(x='relevancy', y='sentiment score', title='relevancy vs. sentiment Values') +
+  scale_x_discrete(label=function(x) abbreviate(x, minlength=15)) +
+  theme(axis.text.x = element_text(angle = 75, hjust = 1)) 
+  
+  
+
+
+ggplot(relevancy_vs_sentiment, aes(x=Relevancy, y=sentiment_score)) +
+  geom_point() +
+  geom_smooth(method = "lm")+
+  labs(x='relevancy', y='sentiment score', title='relevancy vs. sentiment Values') 
+
+```
+
+
 
 
 **left join sentiments into the full scrape**
